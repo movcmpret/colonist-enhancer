@@ -1,0 +1,30 @@
+{
+
+  "manifest_version": 2,
+  "name": "Colonist Buster",
+  "version": "1.0",
+
+  "description": "Colonist state logger",
+  "homepage_url": "https://github.com/movcmpret",
+
+"browser_specific_settings": {
+  "gecko": {
+    "id": "movcmpret@protonmail.com"
+  }},
+
+  "icons": {
+    "48": "icons/48.png"
+  },
+
+  "permissions": [
+    "activeTab"
+  ],
+
+  "browser_action": {
+    "default_icon": "icons/32.png",
+    "default_title": "Colonist Buster",
+    "default_popup": "popup/menu.html"
+  }
+  
+
+}
