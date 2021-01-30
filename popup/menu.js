@@ -66,7 +66,10 @@ browser.runtime.onMessage.addListener((message) =>
 })
 
 
-browser.tabs.executeScript({file: "/content_scripts/test.js"})
+function initContent(){
+browser.tabs.executeScript({file: "/content_scripts/main.js"})
     .then(listenForClicks)
     .catch(reportExecuteScriptError);
+}
 
+initContent()
