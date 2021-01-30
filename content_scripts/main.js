@@ -21,7 +21,9 @@
 
     const initGame =
         {
+            turn : 0,
             round : 0,
+            turningPlayerName : "",
             players : [],
             bank :
                 {
@@ -30,14 +32,23 @@
                     grain : 19,
                     lumber : 19,
                     wool : 19
-                }
+                },
+            unknown : 0
         }
 
-    const CARD_PNG_NAME_BRICK="card_brick.svg"
-    const CARD_PNG_NAME_ORE="card_ore.svg"
-    const CARD_PNG_NAME_GRAIN="card_grain.svg"
-    const CARD_PNG_NAME_LUMBER="card_lumber.svg"
-    const CARD_PNG_NAME_WOOL="card_wool.svg"
+    const SVG_ROAD = "road"
+    const SVG_CITY = "city"
+    const SVG_SETTLEMENT = "settlement"
+
+    const CARD_SVG_DEVELOPMENT = "card_devcardback.svg"
+    const CARD_SVG_MONOPOLY = "card_monopoly.svg"
+    const CARD_YEAR_OF_PLENTY = "card_yearofplenty.svg"
+
+    const CARD_SVG_NAME_BRICK="card_brick.svg"
+    const CARD_SVG_NAME_ORE="card_ore.svg"
+    const CARD_SVG_NAME_GRAIN="card_grain.svg"
+    const CARD_SVG_NAME_LUMBER="card_lumber.svg"
+    const CARD_SVG_NAME_WOOL="card_wool.svg"
 
     const COLONIST_BRICK_SRC= "https://colonist.io/dist/images/card_brick.svg"
     const COLONIST_ORE_SRC= "https://colonist.io/dist/images/card_ore.svg"
@@ -55,21 +66,34 @@
             toggleHide()
     })
 
+    var gameLogFound = false
 
     var isInjected = false
     var contentPanel = null
-
+    var you = null
     var game
 
     function init()
     {
-
+        findGameLogAndInjectHandler()
         removeAds()
-        injectEventListeners()
         analyse()
 
         console.log(game)
         console.log("Colonist Buster Loaded")
+    }
+
+    function findGameLogAndInjectHandler()
+    {
+        document.getElementById(GAME_LOG_ID)?.removeEventListener("DOMNodeInserted", onGameLogChanged) // unregister if available
+        if( document.getElementById(GAME_LOG_ID) )
+        {
+            console.info("Gamelog found!")
+            document.getElementById(GAME_LOG_ID)?.addEventListener("DOMNodeInserted", onGameLogChanged)
+            return
+        }
+        console.warn("Gamelog not found. Searching...")
+        setTimeout(()=> findGameLogAndInjectHandler(), 1000); //Search until the gamelog is found
     }
 
     function analyse()
@@ -81,11 +105,6 @@
         buildContentPanel()
     }
 
-    function injectEventListeners()
-    {
-        document.getElementById(GAME_LOG_ID)?.removeEventListener("DOMNodeInserted", onGameLogChanged)
-        document.getElementById(GAME_LOG_ID)?.addEventListener("DOMNodeInserted", onGameLogChanged)
-    }
     function removeAds()
     {
         document.getElementById("in-game-ad-left")?.remove()
@@ -127,7 +146,7 @@
 
         for(let i = 0; i < g.children.length; i++)
         {
-            extractInfoFromPost(g.children[i])
+            extractInfoFromPost(g.children[i], g.children, i)
         }
         }
         catch (e)
@@ -156,59 +175,100 @@
         let content = "<div>"
 
         //Bank
-        content+="<div style='display: flex; flex-direction: column; margin-bottom: 8px; font-size: 12px'>" +
+        content+="<b>Round:"+game.round+"</b>"
+        content+="<div style='display: flex; flex-direction: row; margin-bottom: 8px; font-size: 12px'>" +
             "<b>Bank</b>" +
-            "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div>"+game.bank.brick+"</div></div>" +
-            "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div>"+game.bank.lumber+"</div></div>" +
-            "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div>"+game.bank.grain+"</div></div>" +
-            "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div>"+game.bank.wool+"</div></div>" +
-            "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+game.bank.ore+"</div></div>" +
+            "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div style='text-align: center'>"+game.bank.lumber+"</div></div>" +
+            "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div style='text-align: center'>"+game.bank.brick+"</div></div>" +
+            "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div style='text-align: center'>"+game.bank.wool+"</div></div>" +
+            "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div style='text-align: center'>"+game.bank.grain+"</div></div>" +
+            "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div style='text-align: center'>"+game.bank.ore+"</div></div>" +
             "</div>"
 
         //Players
          game.players.forEach( p =>
         {
-            content+="<div style='display: flex; flex-direction: column; margin-bottom: 8px; font-size: 12px'>" +
-                "<b>"+p.name+"</b>" +
-                "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div>"+p.resources.brick+"</div></div>" +
-                "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div>"+p.resources.lumber+"</div></div>" +
-                "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div>"+p.resources.grain+"</div></div>" +
-                "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div>"+p.resources.wool+"</div></div>" +
-                "<div style='display: flex; flex-direction: row'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+p.resources.ore+"</div></div>" +
-                "</div>"
+            if(p.name.toLowerCase() === "you") // TODO. buggy
+                return
+            content+="<div style='display: flex; flex-direction: column; margin-bottom: 8px; font-size: 12px; margin: 5px'>" +
+                "<b style=' cursor:pointer;color: "+p.color+"' id='header_"+p.name+"'>"+ (p.name == game.turningPlayerName? ">>" : "")+ (p.name == you ? "You" : p.name)+"</b>" +
+                (!you? "<div>Click on your name </div> </div>" :
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div>"+p.resources.lumber+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div>"+p.resources.brick+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div>"+p.resources.wool+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div>"+p.resources.grain+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+p.resources.ore+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'>K: <div>"+p.knights+"</div></div>" +
+                "</div>")
         })
         content += "</div>"
         contentPanel.innerHTML = content
 
         injectContentPanel()
 
+        //set eventhandler
+        game.players.forEach( p => {
+            document.getElementById("header_" + p.name)?.removeEventListener("click", ()=> onPlayerHeaderClick(p.name))
+            document.getElementById("header_" + p.name)?.addEventListener("click",() => onPlayerHeaderClick(p.name))
+        })
+
+
+    }
+
+    function onPlayerHeaderClick( name ){
+
+        you = name
+        console.warn("You are: ", name)
+        analyse()
     }
 
     ////////// EXTRACTION ////////////////
 
-    function extractInfoFromPost(post) {
+    function extractInfoFromPost(post, gameLogs, currentIndex) {
 
         let contents = $(post).contents()
         if (contents.length > 0) {
 
             let playername = ""
-            let actions = []
 
             if (contents[0].tagName == "IMG") {
+
+
                 if (contents[0].src.includes("player")) // get player name from next node
                 {
                     let text = $(contents[1]).text()
-                    if( !text.includes(" ")) // has to include a space
+                    if(      text.includes("Karma")
+                        ||  !text.includes(" ")
+                        ||  text.includes("Bot")
+                        /*||  !(/\d/.test(text) ||*/
+                        ||   text.includes("No"))
                         return // TODO. Not a player related action
-                    playername =  text.substr(0, text.indexOf(" "))
+
+                    playername =  text.substr(0, text.indexOf(" ")).replace(" ", "").replace("\n", "")
+                    playername = initPlayerIfNotExist(playername,  $(post).css("color"))
+                    game.turningPlayerName = playername
+                }
+                //Check if previous message was  "Giving out starting resources" -> round starts
+                let prevContents = $(gameLogs[currentIndex -1 ]).contents()
+                if( $(prevContents[0]).text().includes("Giving out starting resources") )
+                {
+                    game.turn = 0
+                    game.round = 1
+                    console.warn("Game started!")
                 }
 
             if(!playername) // if we dont have the player name, we cannot continue
                 return
             }
-            else if(contents[0].tagName == "HR" ) // new round
+            else if(contents[0].tagName == "HR" && game.round >= 1 ) // new round
             {
-                game.round = game.round +1
+                game.turn = game.turn + 1
+                if(game.turn === game.players.length+1) //Reset turns and increment round
+                {
+                    game.turn = 1
+                    game.round+= 1
+                }
+                console.warn("Round ", game.round , " turn "+ game.turn+" started.")
             }
 
             // Actions
@@ -216,25 +276,237 @@
             {
                 let text = $(contents[1]).text()
 
-                if( text.includes("got"))
+                if( text.includes("got")) // Regular distribution after roll
                 {
-
                     //following images contain information about resources
-
                     for( let i = 2; i < contents.length; i++)
                     {
-                        if( contents[i].src?.includes(CARD_PNG_NAME_BRICK))
-                            changeResourcesFromPlayer(playername, "brick", 1, true)
-                        else if( contents[i].src?.includes(CARD_PNG_NAME_GRAIN ))
-                            changeResourcesFromPlayer(playername, "grain", 1, true)
-                        else if( contents[i].src?.includes(CARD_PNG_NAME_LUMBER ))
-                            changeResourcesFromPlayer(playername, "lumber", 1, true)
-                        else  if( contents[i].src?.includes(CARD_PNG_NAME_ORE ))
-                            changeResourcesFromPlayer(playername, "ore", 1, true)
-                        else if( contents[i].src?.includes(CARD_PNG_NAME_WOOL ))
-                            changeResourcesFromPlayer(playername, "wool", 1, true)
+
+                        if(contents[i].src)
+                        {
+                            let resource = getResourceFromImgSrc(contents[i].src)
+                            console.log(playername, " received ", resource)
+                            changeResourcesFromPlayer(playername, resource, 1, true)
+                        }
+
                     }
 
+                }
+
+                /**
+                 * STEALING
+                 */
+                if(  text.includes("stole") // each time a player steals, first this message appears: <player> stole card from: <player>.// the next message is: <player> stole <resource>. This is not the case after knight usage
+                    && !text.includes("all of")// do not cover monopoly
+                )
+                {
+                    let previousLog = gameLogs[currentIndex-1];
+                    let previousContents = $(previousLog).contents()
+
+                  if(previousContents.length > 1 && $(previousContents[1]).text()?.includes("moved") ) // we need the next message
+                       return
+
+                    // current (... stole <resource>) -> Get resource
+                    // Covers you stole <resource> from: <player>
+                    if( contents.length >= 3 )
+                    {
+                        if( contents.length  === 4 ) // <you> stole <resource> from <player>
+                        {   let img = contents[2]
+                            let resource = getResourceFromImgSrc(img.src)
+                            let text2 = $(contents[3]).text()
+                            let playerWhoGotRobbed = text2.substr(text2.lastIndexOf(" ")+1, text2.length-1)
+                            console.log(playername, " stole ", resource, " from ", playerWhoGotRobbed)
+                            return changeResourcesFromPlayer(playername, resource, 1, false, playerWhoGotRobbed) // finished
+                        }
+                        if(  contents.length  === 3 ) // <player> stole <resource>  -> refer to previous node to get <playerWhoGotRobbed>
+                        {
+                            let img = contents[2]
+                            let resource = getResourceFromImgSrc(img.src)
+                            let text2 = $(previousContents[previousContents.length -1]).text()
+                            let playerWhoGotRobbed = text2.substr(text2.lastIndexOf(" ")+1, text2.length-1)
+                            console.log(playername, " stole ", resource, " from ", playerWhoGotRobbed)
+                            return changeResourcesFromPlayer(playername, resource, 1, false, playerWhoGotRobbed) // finished
+                            return
+                        }
+                        return console.error("Could not figure out who robbed whom. Inconsistent... ")
+                    }
+                }
+
+                /**
+                 * TRADING
+                 */
+
+                if( text.includes("traded"))
+                {
+                    let resourcesGave = []
+                    let resourcesGot = []
+                    let startPoint = 0
+                    //Resources player gave
+                    for( let i = 2; i < contents.length; i++ )
+                    {
+                        if( contents[i].tagName === "IMG")
+                            resourcesGave.push(getResourceFromImgSrc(contents[i].src))
+                        if($(contents[i]).text().includes("for"))
+                        {
+                            startPoint = i
+                            break
+                        }
+                    }
+
+                    //Resources player took
+                    for( let i = startPoint; i < contents.length; i++ )
+                    {
+                        if( contents[i].tagName === "IMG")
+                            resourcesGot.push(getResourceFromImgSrc(contents[i].src))
+                        if($(contents[i]).text().includes("with"))
+                            break
+                    }
+
+                    let text2 = $(contents[contents.length -1]).text()
+                    if( !$(contents[contents.length -1]).text().includes("with"))
+                        return console.error("Could not determine trade partner for trade. Inconsistent... ", playername, resourcesGave, resourcesGot)
+
+                    let tradeParner = text2.substr(text2.lastIndexOf(":")+1, text2.length-1).replace(" ", "")
+                    //Get other players name
+
+                    if(resourcesGot.length === 0 || resourcesGave.length === 0)
+                        return console.error("Could not determine resources for trade. Inconsistent... ", playername, resourcesGave, resourcesGot)
+
+                    console.log(playername, " traded ", resourcesGave, " for " ,resourcesGot, " with ", tradeParner)
+                    resourcesGave.forEach( r =>
+                    {
+                        changeResourcesFromPlayer(tradeParner, r, 1, false, playername) // Add resources to trade partner
+
+                    })
+                    resourcesGot.forEach( r =>
+                    {
+                        changeResourcesFromPlayer(playername, r, 1, false, tradeParner) // Take resources from trade partner
+                    })
+                    return
+                }
+
+                // Bank
+                if( text.includes("gave bank")) {
+                    let resourcesGave = []
+                    let resourcesGot = []
+                    let startPoint = 0
+                    //Resources player gave
+                    for( let i = 2; i < contents.length; i++ )
+                    {
+                        if( contents[i].tagName === "IMG")
+                            resourcesGave.push(getResourceFromImgSrc(contents[i].src))
+                        if($(contents[i]).text().includes("and"))
+                        {
+                            startPoint = i
+                            break
+                        }
+                    }
+
+                    //Resources player took
+                    for( let i = startPoint; i < contents.length; i++ )
+                    {
+                        if( contents[i].tagName === "IMG")
+                            resourcesGot.push(getResourceFromImgSrc(contents[i].src))
+                    }
+
+                    if(resourcesGot.length === 0 || resourcesGave.length === 0)
+                        return console.error("Could not determine resources for trade. Inconsistent... ", playername, resourcesGave, resourcesGot)
+
+                    console.log(playername, " traded ", resourcesGave, " for " ,resourcesGot, " bank ")
+                    resourcesGave.forEach( r =>
+                    {
+                        changeResourcesFromPlayer(playername, r, -1, true) // Add resources to trade partner
+
+                    })
+                    resourcesGot.forEach( r =>
+                    {
+                        changeResourcesFromPlayer(playername, r, 1, true) // Take resources from trade partner
+                    })
+                    return
+                }
+                /**
+                 * BUILDINGS, DEVLEOPMENTS, DISCARDS
+                 */
+
+                else if( text.includes("built")  )
+                {
+                    if( contents.length !== 3 || contents[2].tagName !== "IMG")
+                        return console.error("Could not determine buildings. Inconsistent...")
+                    let resource = getResourceFromImgSrc( contents[2].src)
+
+                    if(resource === "city")
+                        return playerBoughtCity(playername)
+                    if(resource === "settlement")
+                        return  playerBoughtSettlement(playername)
+                    if(resource === "road")
+                        return  playerBoughtRoad(playername)
+
+                    return console.error("Could not determine buildings. Inconsistent...")
+                }
+
+                //Development
+                else  if( text.includes("bought")  )
+                {
+                    if( contents.length !== 3 || contents[2].tagName !== "IMG")
+                        return console.error("Could not determine what was bought. Inconsistent...")
+
+                    if( contents[2].src.includes(CARD_SVG_DEVELOPMENT))
+                    {
+                        return playerBoughtDevelopment(playername)
+                    }
+
+                    return console.error("Could not determine  what was bought. Inconsistent...")
+                }
+
+                //Discarded
+                else if( text.includes("discarded")  )
+                {
+                    if( contents.length < 3 || contents[2].tagName !== "IMG") // check if at least the first one is an img
+                        return console.error("Could not determine what was discarded. Inconsistent...")
+
+                    let discardedResources = []
+                    for(let i = 2; i < contents.length ; i++)
+                    {
+                        if(contents[i].tagName === "IMG")
+                            discardedResources.push( getResourceFromImgSrc( contents[i].src ))
+                    }
+
+                    if(discardedResources.length === 0)
+                    {
+                        return console.error("Could not determine what was discarded. Inconsistent...")
+                    }
+
+                    console.log( playername, " neded to discard ", discardedResources)
+                    discardedResources.forEach( r =>
+                    {
+                        changeResourcesFromPlayer(playername, r, -1, true)
+                    })
+
+                    return
+                }
+
+                /**
+                 * Development Cards
+                 */
+
+                //Knight
+                else if( text.includes("used knight")  )
+                {
+                    let player  = game.players.find( p => p.name === playername)
+                    if(!player)
+                        return console.error("Could not increment Knight counter. Player not found. Inconsistent from now on...")
+
+                    game.players[game.players.findIndex( p => p.name === playername)].knights +=1
+
+                    return
+                }
+
+                //Monopoly
+                else if( text.includes("used") && contents.length === 5 && contents[2].src?.includes(CARD_SVG_MONOPOLY) )
+                {
+                    let resource = getResourceFromImgSrc(contents[4].src)
+                    playerUsedMonopoly(playername, resource)
+                    return
                 }
 
             }
@@ -243,32 +515,18 @@
     }
 
     function changeResourcesFromPlayer(playername, resource, amount, fromBank = true, otherPlayerName="") {
-        let player = game.players.find(p => p.name == playername)
-
-        if (!player) // init new player
-        {
-            player = {}
-            player.name = playername
-            player.resources =
-                {
-                    brick: 0,
-                    ore: 0,
-                    grain: 0,
-                    lumber: 0,
-                    wool: 0
-                }
-            game.players.push(player)
-        }
 
         let indexOfPlayer = game.players.findIndex(p => p.name == playername)
 
         if(indexOfPlayer === null || indexOfPlayer === undefined)
             return console.error("Playername of current player is not defined. information will be inconsistent from now on.")
 
-            if( !fromBank && !otherPlayer ) // if resources should be sent to another player instead of bank and its undefined.
-                return console.error("Playername is not defined. information will be inconsistent from now on.")
+        if( !fromBank && !otherPlayerName ) // if resources should be sent to another player instead of bank and its undefined.
+            return console.error("Playername is not defined. information will be inconsistent from now on.")
+        if( !resource ) // if resources should be sent to another player instead of bank and its undefined.
+            return console.error("Resource not defined. information will be inconsistent from now on." + resource)
 
-            let indexOfOtherPlayer = game.players.findIndex(p => p.name == playername)
+            let indexOfOtherPlayer = game.players.findIndex(p => p.name == otherPlayerName)
 
             switch (resource) // add or remove amount from players resources and bank
             {
@@ -292,7 +550,120 @@
                     game.players[indexOfPlayer].resources.wool += amount;
                     fromBank? game.bank.wool -= amount : game.players[indexOfOtherPlayer].resources.wool -= amount;
                     break;
+                default: return  console.error("Resource not defined."+ resource)
         }
+
+    // console.info("Resources shifted: Player " + playername, "; resource: ", resource, "; amount: ", amount, "; from Bank: ", fromBank, "; other player: ", otherPlayerName)
+    }
+
+
+    function rectifyResources(playername){
+
+        //playername is the player who recently bought something
+
+
+    }
+
+    function playerBoughtRoad(playername)
+    {
+        changeResourcesFromPlayer(playername, "brick", -1, true);
+        changeResourcesFromPlayer(playername, "lumber", -1, true);
+        console.log(playername, " bought a road")
+        rectifyResources(playername)
+    }
+
+    function playerBoughtSettlement(playername)
+    {
+        changeResourcesFromPlayer(playername, "brick", -1, true);
+        changeResourcesFromPlayer(playername, "lumber", -1, true);
+        changeResourcesFromPlayer(playername, "wool", -1, true);
+        changeResourcesFromPlayer(playername, "grain", -1, true);
+        console.log(playername, " bought a settlement")
+        rectifyResources(playername)
+    }
+
+    function playerBoughtCity(playername)
+    {
+        changeResourcesFromPlayer(playername, "ore", -1, true);
+        changeResourcesFromPlayer(playername, "ore", -1, true);
+        changeResourcesFromPlayer(playername, "ore", -1, true);
+        changeResourcesFromPlayer(playername, "grain", -1, true);
+        changeResourcesFromPlayer(playername, "grain", -1, true);
+        console.log(playername, " bought a city")
+        rectifyResources(playername)
+    }
+
+    function playerBoughtDevelopment(playername)
+    {
+        changeResourcesFromPlayer(playername, "ore", -1, true);
+        changeResourcesFromPlayer(playername, "grain", -1, true);
+        changeResourcesFromPlayer(playername, "wool", -1, true);
+        console.log(playername, " bought a development card")
+        rectifyResources(playername)
+    }
+
+    function playerUsedMonopoly(playername, resource)
+    {
+        game.players.forEach( p => {
+            if(playername == p.name)
+                return
+            for(let i = 0; i < p.resources[resource]; i++)
+            {
+                changeResourcesFromPlayer(playername, resource, 1, false, p.name)
+            }
+        })
+
+    }
+
+
+    function initPlayerIfNotExist(playername, color)
+    {
+        let player = game.players.find(p => p.name == playername)
+        if( playername.toLowerCase() == "you" )
+            player = game.players.find(p => p.name == you )
+        if (!player) // init new player
+        {
+            player = {}
+            player.name = playername
+            player.resources =
+                {
+                    brick: 0,
+                    ore: 0,
+                    grain: 0,
+                    lumber: 0,
+                    wool: 0,
+                },
+            player.roads = 2
+            player.settlements = 2
+            player.cities = 0
+            player.knights = 0
+            player.rolls = []
+            player.color = color
+            game.players.push(player)
+        }
+    return player.name
+    }
+
+    function getResourceFromImgSrc(src)
+    {
+        if( src?.includes(CARD_SVG_NAME_BRICK))
+            return "brick"
+        else if(src?.includes(CARD_SVG_NAME_GRAIN ))
+            return "grain"
+        else if( src?.includes(CARD_SVG_NAME_LUMBER ))
+            return "lumber"
+        else  if(src?.includes(CARD_SVG_NAME_ORE ))
+            return "ore"
+        else if( src?.includes(CARD_SVG_NAME_WOOL ))
+            return "wool"
+        else if( src?.includes(SVG_CITY ))
+            return "city"
+        else if( src?.includes(SVG_ROAD ))
+            return "road"
+        else if( src?.includes(SVG_SETTLEMENT ))
+            return "settlement"
+
+     return console.error("Image src of resource not defined. information will be inconsistent from now on." + src)
     }
 
 
