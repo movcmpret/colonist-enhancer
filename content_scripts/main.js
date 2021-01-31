@@ -237,11 +237,11 @@
                 if (contents[0].src.includes("player")) // get player name from next node
                 {
                     let text = $(contents[1]).text()
-                    if(      text.includes("Karma")
+                    if(      text.replace(" ", "") === "Karma"
                         ||  !text.includes(" ")
-                        ||  text.includes("Bot")
+                        ||    text.replace(" ", "") === "Bot"
                         /*||  !(/\d/.test(text) ||*/
-                        ||   text.includes("No"))
+                        ||    text.replace(" ", "") === "No")
                         return // TODO. Not a player related action
 
                     playername =  text.substr(0, text.indexOf(" ")).replace(" ", "").replace("\n", "")
