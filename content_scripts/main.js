@@ -54,13 +54,13 @@
     const COLONIST_GRAIN_SRC= "https://colonist.io/dist/images/card_grain.svg"
     const COLONIST_LUMBER_SRC= "https://colonist.io/dist/images/card_lumber.svg"
     const COLONIST_WOOL_SRC= "https://colonist.io/dist/images/card_wool.svg"
-
+    const COLONIST_QUESTION_MARK_SRC= "https://colonist.io/dist/images/card_rescardback.svg?v99.1"
 
 
     browser.runtime.onMessage.addListener((message) =>
     {
         if( message.command == "reload"  )
-            init()
+        { you = null; init();}
         if( message.command == "toggle"  )
             toggleHide()
     })
@@ -97,6 +97,9 @@
 
     function analyse()
     {
+        if(!isInjected)
+            return
+        console.clear()
         let newInitGame = JSON.parse( JSON.stringify(initGame)) // used to make a whole new instance
         game = newInitGame
 
@@ -197,6 +200,7 @@
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div>"+p.resources.wool+"</div></div>" +
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div>"+p.resources.grain+"</div></div>" +
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+p.resources.ore+"</div></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_QUESTION_MARK_SRC+" alt='ore'/><div>"+( p.openRobbedFrom.length ) +" / "+( -1* p.openRobbedBy.length ) +"</div></div>" +
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'>K: <div>"+p.knights+"</div></div>" +
                 "</div>")
         })
@@ -650,6 +654,10 @@
         changeResourcesFromPlayer(playername, "brick", -1, true);
         changeResourcesFromPlayer(playername, "lumber", -1, true);
         console.log(playername, " bought a road")
+
+        let playerIndex = game.players.findIndex(p => p.name === playername)
+        if(playerIndex)
+            game.players[playerIndex].roads+=1
         rectifyResources(playername)
     }
 
@@ -660,6 +668,9 @@
         changeResourcesFromPlayer(playername, "wool", -1, true);
         changeResourcesFromPlayer(playername, "grain", -1, true);
         console.log(playername, " bought a settlement")
+        let playerIndex = game.players.findIndex(p => p.name === playername)
+        if(playerIndex)
+            game.players[playerIndex].settlements+=1
         rectifyResources(playername)
     }
 
@@ -671,6 +682,9 @@
         changeResourcesFromPlayer(playername, "grain", -1, true);
         changeResourcesFromPlayer(playername, "grain", -1, true);
         console.log(playername, " bought a city")
+        let playerIndex = game.players.findIndex(p => p.name === playername)
+        if(playerIndex)
+            game.players[playerIndex].cities+=1
         rectifyResources(playername)
     }
 
@@ -714,9 +728,9 @@
                     lumber: 0,
                     wool: 0,
                 },
-           // player.roads = 2
-            //player.settlements = 2
-            //player.cities = 0
+            player.roads = 2
+            player.settlements = 2
+            player.cities = 0
             player.knights = 0
             player.openRobbedBy = []
             player.openRobbedFrom = []

@@ -20,6 +20,13 @@
     "activeTab"
   ],
 
+"content_scripts": [
+    {
+      "matches": ["*://*.colonist.io/*"],
+      "js": ["content_scripts/main.js"]
+    }
+  ],
+  
   "browser_action": {
     "default_icon": "icons/32.png",
     "default_title": "Colonist Buster",
