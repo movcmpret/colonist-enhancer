@@ -56,6 +56,22 @@
     const COLONIST_WOOL_SRC= "https://colonist.io/dist/images/card_wool.svg"
     const COLONIST_QUESTION_MARK_SRC= "https://colonist.io/dist/images/card_rescardback.svg?v99.1"
 
+    const DICE_1_SVG = "dice_1.svg"
+    const DICE_2_SVG = "dice_2.svg"
+    const DICE_3_SVG = "dice_3.svg"
+    const DICE_4_SVG = "dice_4.svg"
+    const DICE_5_SVG = "dice_5.svg"
+    const DICE_6_SVG = "dice_6.svg"
+
+
+    const DICE_1_SRC = "https://colonist.io/dist/images/"+DICE_1_SVG
+    const DICE_2_SRC = "https://colonist.io/dist/images/"+DICE_2_SVG
+    const DICE_3_SRC = "https://colonist.io/dist/images/"+DICE_3_SVG
+    const DICE_4_SRC = "https://colonist.io/dist/images/"+DICE_4_SVG
+    const DICE_5_SRC = "https://colonist.io/dist/images/"+DICE_5_SVG
+    const DICE_6_SRC = "https://colonist.io/dist/images/"+DICE_6_SVG
+
+
 
     browser.runtime.onMessage.addListener((message) =>
     {
@@ -97,8 +113,6 @@
 
     function analyse()
     {
-        if(!isInjected)
-            return
         console.clear()
         let newInitGame = JSON.parse( JSON.stringify(initGame)) // used to make a whole new instance
         game = newInitGame
@@ -171,6 +185,10 @@
             contentPanel = document.createElement("div")
             contentPanel.id = "cb_content_panel"
             contentPanel.style.position = "absolute"
+            contentPanel.style.overflowY = "auto"
+            contentPanel.style.height = "95vh"
+            contentPanel.style.minWidth = "170px"
+            contentPanel.style.flexDirection = "column"
             contentPanel.style.display = isInjected ? "flex" : "none"
         }
 
@@ -192,6 +210,12 @@
         {
             if(p.name.toLowerCase() === "you") // TODO. buggy
                 return
+            let lastDice = null
+            if(p.rolls.length > 0)
+            {
+                let numbers = p.rolls[p.rolls.length-1]
+                lastDice = "<img width='20' height='20' src='"+getDiceSrcFromNumber(numbers[0])+"'/><img width='20' height='20' src='"+getDiceSrcFromNumber(numbers[1])+"'/>("+(numbers[0] + numbers[1])+")"
+            }
             content+="<div style='display: flex; flex-direction: column; margin-bottom: 8px; font-size: 12px; margin: 5px'>" +
                 "<b style=' cursor:pointer;color: "+p.color+"' id='header_"+p.name+"'>"+ (p.name == game.turningPlayerName? ">>" : "")+ (p.name == you ? "You" : p.name)+"</b>" +
                 (!you? "<div>Click on your name </div> </div>" :
@@ -202,6 +226,7 @@
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+p.resources.ore+"</div></div>" +
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_QUESTION_MARK_SRC+" alt='ore'/><div>"+( p.openRobbedFrom.length ) +" / "+( -1* p.openRobbedBy.length ) +"</div></div>" +
                 "<div style='display: flex; flex-direction: row; margin-bottom: 2px'>K: <div>"+p.knights+"</div></div>" +
+                (!lastDice? "" : "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 3px'>last Roll:</div>"+lastDice+"</div></div>")+
                 "</div>")
         })
         content += "</div>"
@@ -234,9 +259,10 @@
 
             let playername = ""
 
+            /**
+             * Init and find out player's name
+             */
             if (contents[0].tagName == "IMG") {
-
-
                 if (contents[0].src.includes("player")) // get player name from next node
                 {
                     // Exclude system messages here
@@ -264,6 +290,10 @@
             if(!playername) // if we dont have the player name, we cannot continue
                 return
             }
+
+            /**
+             * New Round
+             */
             else if(contents[0].tagName == "HR" && game.round >= 1 ) // new round
             {
                 game.turn = game.turn + 1
@@ -295,6 +325,28 @@
 
                     }
 
+                }
+                /**
+                 * Rolling
+                 */
+                if(  text.includes("rolled") ) // capture dicing
+                {
+                    if( contents.length !== 5 )
+                        return console.error("Could not determine rolled dices")
+                    let numbers = []
+
+                    for(let i = 2; i < contents.length; i++)
+                    {
+                        if( contents[i].tagName === "IMG")
+                            numbers.push( getNumberFromDiceSrc(contents[i].src))
+                    }
+
+                    let playerIndex  = game.players.findIndex( p => p.name === playername)
+                    if(playerIndex === null || playerIndex === undefined)
+                        return console.error("Could not find player. Dice stats not consistent")
+
+                    game.players[playerIndex].rolls.push(numbers)
+                    console.log(playername, " rolled ", numbers)
                 }
 
                 /**
@@ -763,8 +815,41 @@
      return console.error("Image src of resource not defined. information will be inconsistent from now on." + src)
     }
 
+    function getNumberFromDiceSrc(src){
 
+        if(src?.includes(DICE_1_SVG))
+            return 1
+        else if(src?.includes(DICE_2_SVG))
+            return 2
+        else if(src?.includes(DICE_3_SVG))
+            return 3
+        else if(src?.includes(DICE_4_SVG))
+            return 4
+        else if(src?.includes(DICE_5_SVG))
+            return 5
+        else if(src?.includes(DICE_6_SVG))
+            return 6
 
+        console.log("Could not find number for dice image")
+
+    }
+
+    function getDiceSrcFromNumber( number )
+    {
+        if(number == 1)
+            return DICE_1_SRC
+        else if(number == 2)
+            return DICE_2_SRC
+        else if(number == 3)
+            return DICE_3_SRC
+        else if(number == 4)
+            return DICE_4_SRC
+        else if(number == 5)
+            return DICE_5_SRC
+        else if(number == 6)
+            return DICE_6_SRC
+
+    }
     ////////////////////////////////////////
 
 
