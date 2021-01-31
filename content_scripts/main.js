@@ -216,16 +216,18 @@
                 let numbers = p.rolls[p.rolls.length-1]
                 lastDice = "<img width='20' height='20' src='"+getDiceSrcFromNumber(numbers[0])+"'/><img width='20' height='20' src='"+getDiceSrcFromNumber(numbers[1])+"'/>("+(numbers[0] + numbers[1])+")"
             }
-            content+="<div style='display: flex; flex-direction: column; margin-bottom: 8px; font-size: 12px; margin: 5px'>" +
-                "<b style=' cursor:pointer;color: "+p.color+"' id='header_"+p.name+"'>"+ (p.name == game.turningPlayerName? ">>" : "")+ (p.name == you ? "You" : p.name)+"</b>" +
+            content+="<div style=' padding:3px;display: flex; background-color: white; border-radius: 10px ;flex-direction: column; margin-bottom: 8px; font-size: 12px; margin: 5px'>" +
+                "<b style='font-size: 14px; cursor:pointer;color: "+p.color+"' id='header_"+p.name+"'>"+ (p.name == game.turningPlayerName? ">>" : "")+ (p.name == you ? "You" : p.name)+"</b>" +
                 (!you? "<div>Click on your name </div> </div>" :
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div>"+p.resources.lumber+"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div>"+p.resources.brick+"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div>"+p.resources.wool+"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div>"+p.resources.grain+"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div>"+p.resources.ore+"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img width='14.25' height='20' src="+COLONIST_QUESTION_MARK_SRC+" alt='ore'/><div>"+( p.openRobbedFrom.length ) +" / "+( -1* p.openRobbedBy.length ) +"</div></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'>K: <div>"+p.knights+"</div></div>" +
+                    "<div style='display: flex; flex-direction: row; margin-bottom: 4px; font-weight: bold '>"+
+                    "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_LUMBER_SRC+" alt='lumber'/><div style='text-align: center'>"+ p.resources.lumber+"</div></div>" +
+                    "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_BRICK_SRC+" alt='brick'/><div style='text-align: center'>"+p.resources.brick+"</div></div>" +
+                    "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_WOOL_SRC+" alt='wool'/><div style='text-align: center'>"+p.resources.wool+"</div></div>" +
+                    "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_GRAIN_SRC+" alt='grain'/><div style='text-align: center'>"+p.resources.grain+"</div></div>" +
+                    "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div style='text-align: center'>"+p.resources.ore+"</div></div>" +
+                    "</div>"+
+                    "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img style='margin-right: 5px' width='14.25' height='20' src="+COLONIST_QUESTION_MARK_SRC+" alt='?'/><b>"+( p.openRobbedFrom.length ) +" / "+( -1* p.openRobbedBy.length ) +"</b></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 5px'>Knights:</div> <b>"+p.knights+"</b></div>" +
                 (!lastDice? "" : "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 3px'>last Roll:</div>"+lastDice+"</div></div>")+
                 "</div>")
         })
