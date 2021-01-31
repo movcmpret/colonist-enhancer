@@ -31,7 +31,11 @@
     "default_icon": "icons/32.png",
     "default_title": "Colonist Buster",
     "default_popup": "popup/menu.html"
-  }
+  },
+  
+    "web_accessible_resources": [
+    "assets/knight.png"
+  ]
   
 
 }

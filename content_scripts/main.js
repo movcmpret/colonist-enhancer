@@ -227,7 +227,7 @@
                     "<div style='display: flex; flex-direction: column; margin-left: 10px'><img width='14.25' height='20' src="+COLONIST_ORE_SRC+" alt='ore'/><div style='text-align: center'>"+p.resources.ore+"</div></div>" +
                     "</div>"+
                     "<div style='display: flex; flex-direction: row; margin-bottom: 2px'><img style='margin-right: 5px' width='14.25' height='20' src="+COLONIST_QUESTION_MARK_SRC+" alt='?'/><b>"+( p.openRobbedFrom.length ) +" / "+( -1* p.openRobbedBy.length ) +"</b></div>" +
-                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 5px'>Knights:</div> <b>"+p.knights+"</b></div>" +
+                "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 5px'><img width='17' height='17' src='"+browser.runtime.getURL("assets/knight.png")+"'></div> <b>"+p.knights+"</b></div>" +
                 (!lastDice? "" : "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 3px'>last Roll:</div>"+lastDice+"</div></div>")+
                 "</div>")
         })

@@ -1,4 +1,7 @@
 
+// Icons: Copyright "Pixel perfect" // flaticon.com
+// Knight Icon: Copyright "Freeplk" // flaticon.com
+
 const hidePage = `body > :not(#cb-content-panel) {
                     display: none;
                   }`;
