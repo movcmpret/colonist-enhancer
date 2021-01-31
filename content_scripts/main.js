@@ -33,7 +33,6 @@
                     lumber : 19,
                     wool : 19
                 },
-            unknown : 0
         }
 
     const SVG_ROAD = "road"
@@ -236,12 +235,13 @@
 
                 if (contents[0].src.includes("player")) // get player name from next node
                 {
+                    // Exclude system messages here
                     let text = $(contents[1]).text()
-                    if(      text.replace(" ", "") === "Karma"
+                    if(      text.includes("Karma System")
                         ||  !text.includes(" ")
                         ||    text.replace(" ", "") === "Bot"
                         /*||  !(/\d/.test(text) ||*/
-                        ||    text.replace(" ", "") === "No")
+                        ||    text.includes("No player to steal from"))
                         return // TODO. Not a player related action
 
                     playername =  text.substr(0, text.indexOf(" ")).replace(" ", "").replace("\n", "")
@@ -300,12 +300,37 @@
                     && !text.includes("all of")// do not cover monopoly
                 )
                 {
+
+                    //Take note, that some user stole smth from some user (try to figure out what, when the user buys something)
+                    if( contents.length === 4 && $(contents[3]).text().includes("from"))
+                    {
+                        let text2 =  $(contents[3]).text()
+                        let playerWhoGotRobbed = text2.substr(text2.lastIndexOf(" ")+1, text2.length-1)
+
+                        // Just cover cases that does not refer to you
+                       if(playerWhoGotRobbed !== you && playername !== you)
+                       {
+                           // link the players to figure out later, which resource was stolen
+                           let playerWhoRobbedId = game.players.findIndex( p => p.name === playername)
+                           let playerWhoGotRobbedId = game.players.findIndex( p => p.name === playerWhoGotRobbed)
+                           if( playerWhoGotRobbedId === null || playerWhoGotRobbedId === undefined || playerWhoRobbedId === null || playerWhoRobbedId === undefined )
+                           {
+                             return console.error("Could not process stealing. Players not found. Inconsistent from now on...")
+                           }
+                            // Create relation
+                           game.players[playerWhoRobbedId].openRobbedFrom.push( playerWhoGotRobbed )
+                           game.players[playerWhoGotRobbedId].openRobbedBy.push( playername )
+
+                       }
+                    }
+
                     let previousLog = gameLogs[currentIndex-1];
                     let previousContents = $(previousLog).contents()
-
                   if(previousContents.length > 1 && $(previousContents[1]).text()?.includes("moved") ) // we need the next message
                        return
 
+                    //Everything that is related to YOU goes here
+                    //
                     // current (... stole <resource>) -> Get resource
                     // Covers you stole <resource> from: <player>
                     if( contents.length >= 3 )
@@ -314,7 +339,7 @@
                         {   let img = contents[2]
                             let resource = getResourceFromImgSrc(img.src)
                             let text2 = $(contents[3]).text()
-                            let playerWhoGotRobbed = text2.substr(text2.lastIndexOf(" ")+1, text2.length-1)
+                            let playerWhoGotRobbed = text2.substr(text2.lastIndexOf(" ")+1, text2.length-1).replace(" ", "")
                             console.log(playername, " stole ", resource, " from ", playerWhoGotRobbed)
                             return changeResourcesFromPlayer(playername, resource, 1, false, playerWhoGotRobbed) // finished
                         }
@@ -497,7 +522,7 @@
                         return console.error("Could not increment Knight counter. Player not found. Inconsistent from now on...")
 
                     game.players[game.players.findIndex( p => p.name === playername)].knights +=1
-
+                    console.log("KNIGHT: ", playername, " got +1 knight")
                     return
                 }
 
@@ -506,6 +531,25 @@
                 {
                     let resource = getResourceFromImgSrc(contents[4].src)
                     playerUsedMonopoly(playername, resource)
+                    console.log("MONOPOLY: ", playername, " took all of ", resource)
+                    return
+                }
+
+                // year of plenty ( 2 Cards from bank )
+                else if( text.includes("took from bank") && contents.length === 5 )
+                {
+                    let resources = []
+                    for(let i = 2; i < contents.length ; i++)
+                    {
+                        if(contents[i].tagName === "IMG")
+                            resources.push( getResourceFromImgSrc( contents[i].src ))
+                    }
+
+                    if(resources.length === 0)
+                        return console.error("Could not determine resources for years of plenty. Inconsistent from now on...")
+
+                    resources.forEach( r => changeResourcesFromPlayer(playername,r,true))
+                    console.log("YEAR OF PLENTY: ", playername, " took ", resources, " from bank.")
                     return
                 }
 
@@ -558,11 +602,48 @@
 
 
     function rectifyResources(playername){
-
         //playername is the player who recently bought something
+
+        let player = game.players.find( p => p.name === playername)
+        if(!player)
+            console.error("Rectify Resources: Could not determine this player: "+playername)
+
+        // go over the players resources and find negative values
+        Object.keys( player.resources)
+            .forEach( resKey => {
+
+                if( player.resources[resKey] < 0) // is a resource negative?
+                {
+                    //console.log(playername, " has negative value for brick ")
+                    for(let i = 0; i <  player.openRobbedFrom.length; i++) // check players who this player recently robbed and decrement the resource
+                    {
+                        let robbedFromPName = player.openRobbedFrom[i]
+                        //find player
+                        let p = game.players.find( p=> p.name === robbedFromPName)
+                        if( p.resources[resKey] > 0 )
+                        {
+                            console.log("Rectifying: ", playername, "probably stole ", resKey, " from ", robbedFromPName, ". Balanced resources." )
+                            let playerWhoRobbedIndex = game.players.findIndex( p => p.name === playername )
+                            let playerWhoGotRobbedIndex = game.players.findIndex( p => p.name === robbedFromPName )
+                            game.players[playerWhoRobbedIndex].resources[resKey] += 1 // raise 1
+                            game.players[playerWhoGotRobbedIndex].resources[resKey]-=1 // shrink 1
+
+                            //Remove the link between the players
+                            game.players[playerWhoRobbedIndex].openRobbedFrom.splice(i,1)
+                            game.players[playerWhoGotRobbedIndex].openRobbedBy.splice( game.players[playerWhoGotRobbedIndex].openRobbedBy.indexOf(playername),1)
+                        }
+                    }
+
+                }
+            })
+
 
 
     }
+
+    /**
+     * BUYING
+     */
 
     function playerBoughtRoad(playername)
     {
@@ -633,10 +714,12 @@
                     lumber: 0,
                     wool: 0,
                 },
-            player.roads = 2
-            player.settlements = 2
-            player.cities = 0
+           // player.roads = 2
+            //player.settlements = 2
+            //player.cities = 0
             player.knights = 0
+            player.openRobbedBy = []
+            player.openRobbedFrom = []
             player.rolls = []
             player.color = color
             game.players.push(player)
