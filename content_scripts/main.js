@@ -95,7 +95,7 @@
         analyse()
 
         console.log(game)
-        console.log("Colonist Buster Loaded")
+        console.log("Colonist Enhancer Loaded")
     }
 
     function findGameLogAndInjectHandler()

@@ -39,7 +39,7 @@ function listenForClicks() {
 function reportExecuteScriptError(error) {
   //  document.querySelector("#popup-content").classList.add("hidden");
   //  document.querySelector("#error-content").classList.remove("hidden");
-    console.error(`Failed to execute colonist buster content script: ${error.message}`);
+    console.error(`Failed to execute colonist enhancer content script: ${error.message}`);
 }
 
 /**
