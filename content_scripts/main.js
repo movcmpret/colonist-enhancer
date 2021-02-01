@@ -237,7 +237,7 @@
         let diceDistribution = getRollDistribution()
         diceDistribution = diceDistribution? diceDistribution : {}
         let totalRolls = 0
-        let maxWidth = 150
+        let maxWidth = 125
         Object.keys(diceDistribution).forEach((key) =>{
             totalRolls+=diceDistribution[key]
         })
@@ -248,7 +248,7 @@
 
                 Object.keys(diceDistribution).forEach( key =>
                 {
-                    content+="<div style='display: flex; flex-direction: row; margin-left: 10px'><div style='width: 25px; '>"+key+":</div><div style='width: "+500*(diceDistribution[key]/totalRolls)+"px; background-color: black ; color : white;text-align: center; justify-content: flex-end'>"+diceDistribution[key]+"</div></div>"
+                    content+="<div style='display: flex; flex-direction: row; margin-left: 10px'><div style='width: 25px; '>"+key+":</div><div style='width: "+ (500*(diceDistribution[key]/totalRolls) > maxWidth ? maxWidth :500*(diceDistribution[key]/totalRolls) )+"px; background-color: black ; color : white;text-align: center; justify-content: flex-end'>"+diceDistribution[key]+"</div></div>"
                 })
 
         content += "</div></div>"
