@@ -179,6 +179,7 @@
 
     function buildContentPanel()
     {
+
         contentPanel = document.getElementById("cb_content_panel")
         if(!contentPanel) // create if not already exist
         {
@@ -186,7 +187,7 @@
             contentPanel.id = "cb_content_panel"
             contentPanel.style.position = "absolute"
             contentPanel.style.overflowY = "auto"
-            contentPanel.style.height = "95vh"
+            contentPanel.style.height = "100vh"
             contentPanel.style.minWidth = "170px"
             contentPanel.style.flexDirection = "column"
             contentPanel.style.display = isInjected ? "flex" : "none"
@@ -231,7 +232,26 @@
                 (!lastDice? "" : "<div style='display: flex; flex-direction: row; margin-bottom: 2px'> <div style='margin-right: 3px'>last Roll:</div>"+lastDice+"</div></div>")+
                 "</div>")
         })
-        content += "</div>"
+
+        //Dice stats
+        let diceDistribution = getRollDistribution()
+        diceDistribution = diceDistribution? diceDistribution : {}
+        let totalRolls = 0
+        let maxWidth = 150
+        Object.keys(diceDistribution).forEach((key) =>{
+            totalRolls+=diceDistribution[key]
+        })
+
+        content+= "<div>" +
+            "<b style='font-size: 14px; margin-top: 15px' >Dice Stats</b>" +
+            "<div style='display: flex; flex-direction: column; margin-bottom: 4px; font-weight: lighter'>"
+
+                Object.keys(diceDistribution).forEach( key =>
+                {
+                    content+="<div style='display: flex; flex-direction: row; margin-left: 10px'><div style='width: 25px; '>"+key+":</div><div style='width: "+500*(diceDistribution[key]/totalRolls)+"px; background-color: black ; color : white;text-align: center; justify-content: flex-end'>"+diceDistribution[key]+"</div></div>"
+                })
+
+        content += "</div></div>"
         contentPanel.innerHTML = content
 
         injectContentPanel()
@@ -241,7 +261,6 @@
             document.getElementById("header_" + p.name)?.removeEventListener("click", ()=> onPlayerHeaderClick(p.name))
             document.getElementById("header_" + p.name)?.addEventListener("click",() => onPlayerHeaderClick(p.name))
         })
-
 
     }
 
@@ -253,6 +272,33 @@
     }
 
     ////////// EXTRACTION ////////////////
+
+    function getRollDistribution()
+    {
+        let numbers = {
+            "2" : 0,
+            "3" : 0,
+            "4" : 0,
+            "5" : 0,
+            "6" : 0,
+            "7" : 0,
+            "8" : 0,
+            "9" : 0,
+            "10" : 0,
+            "11" : 0,
+            "12" : 0
+        }
+        game.players.forEach( p =>
+        {
+            p.rolls.forEach( r =>
+            {
+                let num = r[0] + r[1]
+                numbers[num]+=1
+            })
+        })
+        return numbers
+    }
+
 
     function extractInfoFromPost(post, gameLogs, currentIndex) {
 
@@ -271,6 +317,7 @@
                     let text = $(contents[1]).text()
                     if(      text.includes("Karma System")
                         ||  !text.includes(" ")
+                        ||  text.includes("Skipping")
                         ||    text.replace(" ", "") === "Bot"
                         /*||  !(/\d/.test(text) ||*/
                         ||    text.includes("No player to steal from"))
