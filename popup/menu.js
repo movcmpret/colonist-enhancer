@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 
 // Icons: Copyright "Pixel perfect" // flaticon.com
 // Knight Icon: Copyright "Freeplk" // flaticon.com
