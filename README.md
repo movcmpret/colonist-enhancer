@@ -1,3 +1,5 @@
+# Not maintained!
+______
 # colonist-enhancer
 A Firefox Plugin that helps you playing colonist.io
 
